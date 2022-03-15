@@ -1,4 +1,4 @@
-async function groupedConcurrency(iterator, promise, opts) {
+async function groupedConcurrency (iterator, promise, opts) {
   const state = {};
   const f = iterator.reduce((o, x) => {
     if (!o[x[opts.key]]) {
@@ -33,7 +33,7 @@ async function groupedConcurrency(iterator, promise, opts) {
         const u = f[v];
         state[v].a = true;
 
-        let p = promise(u[state[v].i]).catch((e) => {
+        let p = promise(u[state[v].i]).catch(e => {
           return Promise.resolve({ err: e });
         });
         ++state[v].i;
