@@ -21,6 +21,9 @@ async function groupedConcurrency (iterator, promise, opts) {
       for (;;) {
         let m = 0;
         // len + 1 to hit itself once
+        // assumes about equal sizing of all group elements
+        // faster by avoiding manipulating an array structure by using pop
+        // could be improved by manipulating on the index
         while (
           (state[keys[++i % mod]].i >= f[keys[i % mod]].length ||
             state[keys[i % mod]].a) &&
