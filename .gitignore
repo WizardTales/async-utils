@@ -1,0 +1,13 @@
+.tern-port
+node_modules
+.helm
+.kube
+build
+lib/config.js
+export/*
+data/*
+*.jsc
+.terraform
+fuge/log
+.idea
+.DS_Store
