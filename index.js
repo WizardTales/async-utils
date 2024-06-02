@@ -14,6 +14,7 @@ async function groupedConcurrency (iterator, promise, opts) {
   const mod = len + 1;
   const promises = [];
   const result = {};
+  const rounds = opts.delay ? 2 : 1;
   let i = -1;
 
   for (let c = 0; c < opts.concurrency; ++c) {
@@ -25,12 +26,19 @@ async function groupedConcurrency (iterator, promise, opts) {
         // faster by avoiding manipulating an array structure by using pop
         // could be improved by manipulating on the index
         while (
-          (state[keys[++i % mod]].i >= f[keys[i % mod]].length ||
+          (state[keys[++i % mod]].i >= f[keys[i % mod]].length * rounds ||
             state[keys[i % mod]].a) &&
           m++ < len + 1
         );
 
         if (m >= len) return Promise.resolve();
+
+        // when we allow a promise to be delayed (put back into queue) we
+        // reset the actual value of i to its corresponding value for another
+        // scan through round
+        if (opts.delay && state[keys[i % mod]].i >= f[keys[i % mod]].length) {
+          state[keys[i % mod]].i %= f[keys[i % mod]].length;
+        }
 
         const v = keys[i % mod];
         const u = f[v];
@@ -44,10 +52,14 @@ async function groupedConcurrency (iterator, promise, opts) {
         // delayed to avoid double execution due to to late increment of
         // ___it_g
         p = await p;
+
+        if (opts.delay && p?.__delay === true) {
+          state[v].a = false;
+          continue;
+        }
+
         if (!result[v]) result[v] = [p];
         else result[v].push(p);
-
-        state[v].a = false;
       }
     })();
   }
