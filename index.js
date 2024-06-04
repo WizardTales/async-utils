@@ -60,6 +60,8 @@ async function groupedConcurrency (iterator, promise, opts) {
 
         if (!result[v]) result[v] = [p];
         else result[v].push(p);
+
+        state[v].a = false;
       }
     })();
   }
