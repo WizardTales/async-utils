@@ -10,8 +10,8 @@ async function groupedConcurrency (iterator, promise, opts) {
   }, {});
 
   const keys = Object.keys(f);
-  const len = keys.length - 1;
-  const mod = len + 1;
+  const len = keys.length;
+  const mod = len;
   const promises = [];
   const result = {};
   const rounds = opts.delay ? 2 : 1;
@@ -28,7 +28,7 @@ async function groupedConcurrency (iterator, promise, opts) {
         while (
           (state[keys[++i % mod]].i >= f[keys[i % mod]].length * rounds ||
             state[keys[i % mod]].a) &&
-          m++ < len + 1
+          m++ < len
         );
 
         if (m >= len) return Promise.resolve();
