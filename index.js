@@ -75,10 +75,27 @@ class DAG {
     this._root = {};
     this._dep = {};
     this._new = [];
+    this._groups = {};
+    this._rgroups = {};
   }
 
-  add (key, value, dep = null) {
+  add (key, value, dep = null, group = null) {
     const newDeps = new Map();
+    // sometimes we want to serialize on a common key
+    if (group && !dep && this._groups[group]) {
+      dep = [this._groups[group]];
+
+      // we need to remove any before entry
+      delete this._rgroups[this._groups[group]][group];
+    }
+
+    // the last added element will always lead the group
+    if (group) {
+      this._groups[group] = key;
+      this._rgroups[key] = this._rgroups[key] || {};
+      this._rgroups[key][group] = 1;
+    }
+
     if (dep === null) {
       this._root[key] = { value, s: false, exec: [] };
       this._new.push(this._root[key]);
@@ -133,6 +150,14 @@ class DAG {
 
           delete this._dep[e];
         }
+      }
+
+      if (this._rgroups[key]) {
+        for (const g of this._rgroups[key]) {
+          delete this._groups[g];
+        }
+
+        delete this._rgroups[key];
       }
 
       delete this._root[key];
