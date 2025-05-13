@@ -82,8 +82,10 @@ class DAG {
   add (key, value, dep = null, group = null) {
     const newDeps = new Map();
     // sometimes we want to serialize on a common key
-    if (group && !dep && this._groups[group]) {
-      dep = [this._groups[group]];
+    if (group && this._groups[group]) {
+      if (!dep) {
+        dep = [this._groups[group]];
+      }
 
       // we need to remove any before entry
       delete this._rgroups[this._groups[group]][group];
@@ -124,6 +126,7 @@ class DAG {
         };
       } else {
         this._root[key] = { value, s: false, exec: [] };
+        this._new.push(this._root[key]);
       }
     }
   }
@@ -223,6 +226,19 @@ class WorkerPool {
 
   isRunning () {
     return this.size !== 0;
+  }
+
+  async fill () {
+    if (typeof this._getWork === 'function') {
+      const work = await this._getWork();
+      for (const nw of work) {
+        this.add(nw);
+      }
+
+      return true;
+    } else {
+      throw new Error('fill does not work without _getWork defined.');
+    }
   }
 
   add (w) {
