@@ -70,9 +70,7 @@ async function groupedConcurrency (iterator, promise, opts) {
   return result;
 }
 
-module.exports = { groupedConcurrency };
-
-export const DAG = class DAG {
+class DAG {
   constructor () {
     this._root = {};
     this._dep = {};
@@ -153,7 +151,7 @@ export const DAG = class DAG {
   }
 };
 
-export const WorkerPool = class WorkerPool {
+class WorkerPool {
   constructor (size, getWork) {
     this.size = 0;
     this._max = size;
@@ -241,3 +239,5 @@ export const WorkerPool = class WorkerPool {
 // l.add(() => sleep(1.1));
 // setInterval(() => console.log(l), 100);
 // console.log(l);
+
+module.exports = { groupedConcurrency, DAG, WorkerPool };
