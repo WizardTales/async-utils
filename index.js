@@ -199,7 +199,8 @@ class WorkerPool {
     this._free.pop();
     for (;;) {
       console.log('lg', w);
-      await w().catch(() => {});
+      await w.w().catch(() => {});
+      await this.finish(w.id);
 
       // if still work in queue continue, otherwise add free slot position
       // back to the marker array
