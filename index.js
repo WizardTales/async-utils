@@ -156,7 +156,7 @@ class DAG {
       }
 
       if (this._rgroups[key]) {
-        for (const g of this._rgroups[key]) {
+        for (const g in this._rgroups[key]) {
           delete this._groups[g];
         }
 
@@ -199,7 +199,6 @@ class WorkerPool {
     ++this.size;
     this._free.pop();
     for (;;) {
-      console.log('lg', w);
       await w.w().catch(() => {});
       if (typeof this._finish === 'function') {
         await this._finish(w.id);
