@@ -70,6 +70,17 @@ async function groupedConcurrency (iterator, promise, opts) {
   return result;
 }
 
+/**
+ * This is a direct acyclic graph with the special note that
+ * non existing references are automatically fullfilled and do not result
+ * in an error.
+ *
+ * This is useful to represent complex dependencies between different tasks.
+ * Additionally we allow to group together instructions to ensure they are only
+ * executed serially, without the explicit need to build a complete dag chain.
+ *
+ * This class is optimized to be used with the WorkerPool class.
+ */
 class DAG {
   constructor () {
     this._root = {};
@@ -181,26 +192,41 @@ class DAG {
   }
 };
 
+/**
+ * This is a passive worker queue, it works by specifying a max
+ * amount of concurrent working slots. Whenever work is added it
+ * will be easer immediately put for execution, or if all slots are full
+ * entered into a queue.
+ *
+ * As soon as one task finishes, it can either automatically execute the 
+ * finish function given during the constructor, or from outside of the class.
+ *
+ * When a tasks finishes, it will decrease the number of jobs in work again and
+ * immediately check if any work is in the backpressure queue and remove it
+ * from there. Additionally it will check the getWork routine 
+ * from where it can get fresh tasks from outside.
+ *
+ * When no work is left and nothing added it will go idle. Whenever a new task
+ * is getting added, it will start automatically from there.
+ */
 class WorkerPool {
+  #wsize = 0;
+
   constructor (size, getWork, finish) {
     this.size = 0;
     this._max = size;
     this._worker = [];
-    this._free = [];
     this._getWork = getWork;
     this._finish = finish;
-
-    for (let i = 0; i < size; ++i) {
-      this._free.push(true);
-    }
 
     this._queue = [];
   }
 
   async _work (w) {
     ++this.size;
-    this._free.pop();
-    for (;;) {
+    ++this.#wsize;
+    let working = true
+    for (; working === true;) {
       await w.w().catch(() => {});
       if (typeof this._finish === 'function') {
         await this._finish(w.id);
@@ -211,18 +237,20 @@ class WorkerPool {
       if (this._queue.length !== 0) {
         w = this._queue.shift();
       } else {
-        this._free.push(true);
+        --this.#wsize;
 
-        // if a refill function is specified, now is the time to call it to
-        // get new work and push it in
-        if (typeof this._getWork === 'function') {
-          const work = await this._getWork();
-          for (const nw of work) {
-            this.add(nw);
-          }
+        
+        
+        working = false;
+      }
+
+      // if a refill function is specified, now is the time to call it to
+      // get new work and push it in
+      if (typeof this._getWork === 'function') {
+        const work = await this._getWork();
+        for (const nw of work) {
+          this.add(nw);
         }
-
-        break;
       }
     }
 
@@ -230,7 +258,7 @@ class WorkerPool {
   }
 
   isRunning () {
-    return this.size !== 0;
+    return this.#wsize !== 0;
   }
 
   async fill () {
@@ -247,7 +275,7 @@ class WorkerPool {
   }
 
   add (w) {
-    if (this._free.length) {
+    if (this.#wsize < this._max) {
       this._work(w);
     } else {
       this._queue.push(w);
