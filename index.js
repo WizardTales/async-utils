@@ -201,7 +201,7 @@ class WorkerPool {
     for (;;) {
       console.log('lg', w);
       await w.w().catch(() => {});
-      if (typeof w.f === 'function') {
+      if (typeof this._finish === 'function') {
         await this._finish(w.id);
       }
 
