@@ -85,6 +85,8 @@ class DAG {
     if (group && this._groups[group]) {
       if (!dep) {
         dep = [this._groups[group]];
+      } else {
+        dep.push(this._groups[group]);
       }
 
       // we need to remove any before entry
