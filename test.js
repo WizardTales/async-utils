@@ -1,4 +1,4 @@
-import asyncUtils from '@wizardtales/async-utils';
+import asyncUtils from './index.js';
 const { groupedConcurrency, DAG, WorkerPool } = asyncUtils;
 
 const dag = new DAG();
