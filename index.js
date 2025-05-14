@@ -180,12 +180,13 @@ class DAG {
 };
 
 class WorkerPool {
-  constructor (size, getWork) {
+  constructor (size, getWork, finish) {
     this.size = 0;
     this._max = size;
     this._worker = [];
     this._free = [];
     this._getWork = getWork;
+    this._finish = finish;
 
     for (let i = 0; i < size; ++i) {
       this._free.push(true);
@@ -200,7 +201,9 @@ class WorkerPool {
     for (;;) {
       console.log('lg', w);
       await w.w().catch(() => {});
-      await this.finish(w.id);
+      if (typeof w.f === 'function') {
+        await this._finish(w.id);
+      }
 
       // if still work in queue continue, otherwise add free slot position
       // back to the marker array
