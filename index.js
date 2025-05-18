@@ -204,7 +204,11 @@ class DAG {
  * When a tasks finishes, it will decrease the number of jobs in work again and
  * immediately check if any work is in the backpressure queue and remove it
  * from there. Additionally it will check the getWork routine 
- * from where it can get fresh tasks from outside.
+ * from where it can get fresh tasks from outside. The getWork routine is very
+ * lazy, as it is only called after a task is finished. The quickest way to
+ * fill up is from outside directly when new work is available. I.e. in 
+ * combination with the DAG and the fill() method. The system can work in a
+ * self looping manner.
  *
  * When no work is left and nothing added it will go idle. Whenever a new task
  * is getting added, it will start automatically from there.
